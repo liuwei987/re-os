@@ -365,7 +365,7 @@ cpuid: family=6, model=0x1a, stepping=5, vmx=1
 # The Bochs BIOS currently supports only the option "fastboot" to skip the
 # boot menu delay.
 #=======================================================================
-romimage: file=/usr/share/bochs/BIOS-bochs-latest, options=fastboot
+romimage: file=/usr/local/share/bochs/BIOS-bochs-latest, options=fastboot
 #romimage: file=$BXSHARE/bios.bin-1.13.0 # http://www.seabios.org/SeaBIOS
 #romimage: file=mybios.bin, address=0xfff80000 # 512k at memory top
 
@@ -373,7 +373,9 @@ romimage: file=/usr/share/bochs/BIOS-bochs-latest, options=fastboot
 # VGAROMIMAGE
 # You now need to load a VGA ROM BIOS into C0000.
 #=======================================================================
-vgaromimage: file=/usr/share/vgabios/vgabios.bin
+#vgaromimage: file=/usr/local/share/vgabios/vgabios.bin
+vgaromimage: file="/usr/local/share/bochs/VGABIOS-lgpl-latest"
+#vgaromimage: file=/usr/local/share/bochs/vgabios-cirrus.bin-1.13.0
 #vgaromimage: file=bios/VGABIOS-lgpl-latest-cirrus
 #vgaromimage: file=$BXSHARE/vgabios-cirrus.bin-1.13.0 # http://www.seabios.org/SeaVGABIOS
 #vgaromimage: file=bios/VGABIOS-elpin-2.40
@@ -636,7 +638,7 @@ private_colormap: enabled=0
 # write protect switch. By default it is turned off.
 #=======================================================================
 #floppya: 1_44=/dev/fd0, status=inserted
-floppya: 1_44="boot.img", status=inserted
+floppya: 1_44="out/boot.img", status=inserted
 #floppya: image=../1.44, status=inserted
 #floppya: 1_44=/dev/fd0H1440, status=inserted
 #floppya: 1_2=../1_2, status=inserted
