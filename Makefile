@@ -9,7 +9,11 @@ LD=ld
 NASM=nasm
 OBJDUMP=objdump
 OBJCOPY=objcopy
-CFLAGS= -Werror -Wstack-protector -fstack-protector
+CFLAGS= -Werror -fstack-protector
+LDFLAGS= -Wl,-Map=output.map
+MAKE=make
+
+export OUT CC DD AS LD CFLAGS LDFLAGS MAKE
 
 INCLUDE = -I$(PWD)/include
 
@@ -58,6 +62,10 @@ boot.bin:
 loader.bin:
 	@echo -e "crate loader.bin..."; \
 	$(NASM) $(LOADER_SRC) -o $(OUT)/$@ || exit $?
+
+.PHONY: tools
+tools:
+	$(MAKE) -C $(PWD)/scripts/
 
 .PHONY: clean
 clean:
