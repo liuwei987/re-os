@@ -34,7 +34,7 @@ prepare: clean
 	$(shell [ -d $(OUT) ] || mkdir $(OUT))
 
 define start_bochs
-	@read -p "Start BOCHS:(Enter to default to [y]): " start_gui; \
+	@read -p "Start BOCHS for this image:(Enter to default is yes, 'n' to No): " start_gui; \
 	if [  "$$start_gui"x = "n"x ]; then \
 		echo "Existing with no bochs!" ; exit 0; \
 	fi ; \
