@@ -1,5 +1,5 @@
 target=parse
-.PHONY: all $(target)/ $(OUT)/%.o
+.PHONY: all $(target) $(OUT)/%.o
 all: $(target)
 
 INCLUDE := -I./include/file -I./include/debug/ -I./include/lib
