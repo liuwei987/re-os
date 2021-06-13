@@ -84,7 +84,6 @@ start_loader:
 	pop ax
 
 	cli
-	db 0x66
 	lgdt [GdtPtr]
 
 	mov eax, cr0
@@ -596,7 +595,7 @@ DispAL:
 
 	pop edi
 	pop edx
-	pop edi
+	pop ecx
 	ret
 
 Test:
