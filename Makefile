@@ -1,31 +1,37 @@
-PWD=$(shell echo -e `pwd`)
-OUT=$(PWD)/out
+PWD :=$(shell echo -e `pwd`)
+OUT :=$(PWD)/out
 
 # Compile tools and flags
-CC=gcc
-DD=dd
-AS=as
-LD=ld
-NASM=nasm
-OBJDUMP=objdump
-OBJCOPY=objcopy
-CFLAGS= -Werror -fstack-protector
-LDFLAGS= -Wl,-Map=output.map
-MAKE=make
+CC   := gcc
+DD   := dd
+AS   := as
+LD   := ld
+NASM := nasm
+OBJDUMP := objdump
+OBJCOPY := objcopy
+CFLAGS  := -Werror -fstack-protector -mcmodel=large -fno-builtin -m64 -Wl,-Map=output.map
+ASFLAGS := --64
+LDFLAGS := -b elf64-x86-64
+OBJCPYFLAGS := -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary
+MAKE    := make
 
 export OUT CC DD AS LD CFLAGS LDFLAGS MAKE
 
-INCLUDE = -I$(PWD)/include
+INCLUDE := -I$(PWD)/include
 
 # Compile the source file
-BOOT_SRC=$(PWD)/arch/x86/boot/boot.asm
-LOADER_SRC=$(PWD)/arch/x86/boot/loader.asm
+BOOT_DIR := $(PWD)/arch/x86/boot
+KERN_DIR := $(PWD)/arch/x86/kernel
+BOOT_SRC := $(BOOT_DIR)/boot.asm
+LOADER_SRC := $(BOOT_DIR)/loader.asm
+KERN_HEAD_SRC := $(KERN_DIR)/head.S
+KERN_MAIN_SRC := $(KERN_DIR)/main.c
 
 # Virtual machine for debuging OS
-BOCHS=bochs
+BOCHS := bochs
 
 .PHONY: all
-all: prepare boot
+all: prepare kernel.bin boot
 	$(call start_bochs)
 
 # create directory for output
@@ -34,12 +40,24 @@ prepare: clean
 	$(shell [ -d $(OUT) ] || mkdir $(OUT))
 
 define start_bochs
-	@read -p "Start BOCHS:(Enter to default to [y]): " start_gui; \
+	@read -p "Start BOCHS for this image:(Enter to default is yes, 'n' to No): " start_gui; \
 	if [  "$$start_gui"x = "n"x ]; then \
 		echo "Existing with no bochs!" ; exit 0; \
 	fi ; \
 	$(BOCHS) -q
 endef
+
+.PHONY: kernel.bin head.o main.o
+kernel.bin: head.o main.o
+	@$(LD) $(LDFLAGS) -o $(OUT)/kernel.o $(OUT)/head.o $(OUT)/main.o -T $(BOOT_DIR)/kernel.lds
+	@$(OBJCOPY) $(OBJCPYFLAGS) $(OUT)/kernel.o $(OUT)/$@
+
+main.o: $(KERN_MAIN_SRC)
+	@$(CC) $(CFLAGS) -c $< -o $(OUT)/$@
+
+head.o: $(KERN_HEAD_SRC)
+	@$(CC) -E $< > head.s
+	@$(AS) $(ASFLAGS) -o $(OUT)/$@ head.s
 
 .PHONY: boot
 boot: boot.bin loader.bin
@@ -51,6 +69,7 @@ boot: boot.bin loader.bin
 	@# Copy loader.bin into the boot.image
 	@sudo mount $(OUT)/boot.img /media/ -t vfat -o loop || exit $?; \
 	sudo cp $(OUT)/loader.bin /media/ || exit $?; \
+	sudo cp $(OUT)/kernel.bin /media/ || exit $?; \
 	sync; sudo umount /media || exit $?
 
 .PHONY: boot.bin

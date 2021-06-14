@@ -5,20 +5,20 @@
 00.在模拟的x86_64平台上运行简单OS的虚拟环境以及配置 [Done]  
 当前使用BOCHS,并提供一个BOCHS的配置 or QEMU的配置  
 
-##### 01.编写在存储设备上0扇区的512字节boot.asm代码
+##### 01.编写在存储设备上0扇区的512字节boot.asm代码[Done]
 a).在存储设备0扇区上构建FAT12文件系统分区  
 
-##### 02.编写loader程序，loader要做到如下：
+##### 02.编写loader程序，loader要做到如下：[Done]
 a).检测硬件信息  
 b).处理器切换模式  
 c).向内核传递数据  
 
-##### 03.内核执行头程序(head.S):
+##### 03.内核执行头程序(head.S):[Done]
 a).初始化GDT/IDT  
 b).初始化PML4  
 c).跳转并执行Start kernel  
 
-##### 04.编写Makefile
+##### 04.编写Makefile[Done]
 
 ##### 05.实现printk，在屏幕上打印log
 a).在屏幕上显示  
