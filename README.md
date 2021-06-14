@@ -13,12 +13,12 @@ a).检测硬件信息
 b).处理器切换模式  
 c).向内核传递数据  
 
-##### 03.内核执行头程序(head.S):
+##### 03.内核执行头程序(head.S):[Done]
 a).初始化GDT/IDT  
 b).初始化PML4  
 c).跳转并执行Start kernel  
 
-##### 04.编写Makefile
+##### 04.编写Makefile[Done]
 
 ##### 05.实现printk，在屏幕上打印log
 a).在屏幕上显示  
