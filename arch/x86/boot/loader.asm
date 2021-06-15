@@ -417,6 +417,7 @@ SVGA_Mode_Info_Finish:
 ;	set the SVGA mode(VESA VBE)
 	mov ax, 4f02h
 	mov bx, 4180h   ; mode (0x180 or 0x143)
+	int 10h
 	cmp ax, 004fh
 	jnz Set_SVGA_Mode_VESA_VBE_FAIL
 
