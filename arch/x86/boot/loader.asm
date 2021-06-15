@@ -309,7 +309,7 @@ Get_Mem_OK:
 	mov bp, StartGetSVGAVBEInfoMessage
 	int 10h
 
-;	stroe SVGA infor start from [es:di](00:0x8000)
+;	stroe VBE controller infor start from [es:di](00:0x8000)
 	mov ax, 0x00
 	mov es, ax
 	mov di, 0x8000
@@ -416,7 +416,7 @@ SVGA_Mode_Info_Finish:
 
 ;	set the SVGA mode(VESA VBE)
 	mov ax, 4f02h
-	mov bx, 4180h   ; mode (0x180 or 0x143)
+	mov bx, 4118h   ; mode (0x118 or 1024*768 16M color)
 	int 10h
 	cmp ax, 004fh
 	jnz Set_SVGA_Mode_VESA_VBE_FAIL
