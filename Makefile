@@ -56,8 +56,8 @@ main.o: $(KERN_MAIN_SRC)
 	@$(CC) $(CFLAGS) -c $< -o $(OUT)/$@
 
 head.o: $(KERN_HEAD_SRC)
-	@$(CC) -E $< > head.s
-	@$(AS) $(ASFLAGS) -o $(OUT)/$@ head.s
+	@$(CC) -E $< > $(OUT)/head.s
+	@$(AS) $(ASFLAGS) -o $(OUT)/$@ $(OUT)/head.s
 
 .PHONY: boot
 boot: boot.bin loader.bin
