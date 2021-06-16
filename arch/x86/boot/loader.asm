@@ -417,6 +417,7 @@ SVGA_Mode_Info_Finish:
 ;	set the SVGA mode(VESA VBE)
 	mov ax, 4f02h
 	mov bx, 4180h   ; mode (0x180 or 0x143)
+	int 10h
 	cmp ax, 004fh
 	jnz Set_SVGA_Mode_VESA_VBE_FAIL
 
@@ -598,38 +599,6 @@ DispAL:
 	pop ecx
 	ret
 
-Test:
-	push ax
-	push bx
-	push dx
-	push cx
-	push es
-	push bp
-	push ds
-
-;	Display start loader message
-	mov	ax,	1301h
-	mov	bx,	000fh
-	mov	dx,	0100h
-	mov	cx,	12
-	push	ax
-	mov	ax,	ds
-	mov	es,	ax
-	pop	ax
-	mov	bp,	TestMessage
-	int	10h
-
-	pop ds
-	pop bp
-	pop es
-	pop cx
-	pop dx
-	pop bx
-	pop ax
-
-	ret
-
-
 IDT:
 	times 0x50 dq 0
 IDT_END:
@@ -640,7 +609,6 @@ IDT_POINTER:
 
 DisplayPosition		dd	0
 StartLoaderMessage:	db	"Start Loader..."
-TestMessage:		db	"test Message!"
 RootDirSizeForLoop:	dw	RootDirSectors
 SectorNo:		dw	0
 Odd:			db	0
