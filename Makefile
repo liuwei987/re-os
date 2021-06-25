@@ -1,31 +1,40 @@
-PWD :=$(shell echo -e `pwd`)
-OUT :=$(PWD)/out
+PWD :=$(shell pwd)
+OUT :=out
 
 # Compile tools and flags
 CC   := gcc
 DD   := dd
 AS   := as
+AR   := ar
 LD   := ld
 NASM := nasm
 OBJDUMP := objdump
 OBJCOPY := objcopy
-CFLAGS  := -Werror -fstack-protector -mcmodel=large -fno-builtin -m64 -Wl,-Map=output.map
+#TODO: fix the number function check stack failed
+CFLAGS  := -Werror -fno-stack-protector -mcmodel=large -fno-builtin -m64 -Wl,-Map=output.map
 ASFLAGS := --64
+ARFLAGS := crs
 LDFLAGS := -b elf64-x86-64
 OBJCPYFLAGS := -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary
 MAKE    := make
 
 export OUT CC DD AS LD CFLAGS LDFLAGS MAKE
 
-INCLUDE := -I$(PWD)/include
+INCLUDE := -I./modules/ -I./arch/x86/kernel/
 
 # Compile the source file
-BOOT_DIR := $(PWD)/arch/x86/boot
-KERN_DIR := $(PWD)/arch/x86/kernel
+MODULES := modules
+BOOT_DIR := arch/x86/boot
+KERN_DIR := arch/x86/kernel
 BOOT_SRC := $(BOOT_DIR)/boot.asm
 LOADER_SRC := $(BOOT_DIR)/loader.asm
-KERN_HEAD_SRC := $(KERN_DIR)/head.S
-KERN_MAIN_SRC := $(KERN_DIR)/main.c
+
+MOD_LIB := $(OUT)/$(MODULES)/printk.a
+
+LIB_OBJS = $(patsubst %.c, $(OUT)/%.o, $(wildcard $(MODULES)/*.c))
+OBJS = $(patsubst %.S, $(OUT)/%.o, $(wildcard $(KERN_DIR)/*.S))
+OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/*.c))
+
 
 # Virtual machine for debuging OS
 BOCHS := bochs
@@ -37,7 +46,10 @@ all: prepare kernel.bin boot
 # create directory for output
 .PHONY: prepare
 prepare: clean
-	$(shell [ -d $(OUT) ] || mkdir $(OUT))
+	$(shell [ -e $(OUT) ] || mkdir -p $(OUT))
+	$(shell [ -e $(OUT)/$(MODULES) ] || mkdir -p $(OUT)/$(MODULES))
+	$(shell [ -e $(OUT)/$(BOOT_DIR) ] || mkdir -p $(OUT)/$(BOOT_DIR))
+	$(shell [ -e $(OUT)/$(KERN_DIR) ] || mkdir -p $(OUT)/$(KERN_DIR))
 
 define start_bochs
 	@read -p "Start BOCHS for this image:(Enter to default is yes, 'n' to No): " start_gui; \
@@ -47,40 +59,45 @@ define start_bochs
 	$(BOCHS) -q
 endef
 
-.PHONY: kernel.bin head.o main.o
-kernel.bin: head.o main.o
-	@$(LD) $(LDFLAGS) -o $(OUT)/kernel.o $(OUT)/head.o $(OUT)/main.o -T $(BOOT_DIR)/kernel.lds
-	@$(OBJCOPY) $(OBJCPYFLAGS) $(OUT)/kernel.o $(OUT)/$@
+.PHONY: kernel.bin
+kernel.bin: $(OBJS) $(MOD_LIB)
+	$(LD) $(LDFLAGS) -static -o $(OUT)/$(KERN_DIR)/kernel.o $(OBJS) -L$(OUT)/$(MODULES)/ $(MOD_LIB) -T $(KERN_DIR)/kernel.lds
+	@$(OBJCOPY) $(OBJCPYFLAGS) $(OUT)/$(KERN_DIR)/kernel.o $(OUT)/$(KERN_DIR)/$@
 
-main.o: $(KERN_MAIN_SRC)
-	@$(CC) $(CFLAGS) -c $< -o $(OUT)/$@
+$(OUT)/%.o: %.c
+	#[ -e $(dir $@) ] || mkdir -p $(dir $@);
+	$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 
-head.o: $(KERN_HEAD_SRC)
-	@$(CC) -E $< > $(OUT)/head.s
-	@$(AS) $(ASFLAGS) -o $(OUT)/$@ $(OUT)/head.s
+$(OUT)/%.o: %.S
+	#[ -e $(dir $@) ] || mkdir -p $(dir $@)
+	@$(CC) -E $< > $(dir $@)/head.s
+	@$(AS) $(ASFLAGS) -o $@ $(dir $@)/head.s
+
+$(MOD_LIB): $(LIB_OBJS)
+	$(AR) $(ARFLAGS) $@ $^
 
 .PHONY: boot
 boot: boot.bin loader.bin
 	@# Burn boot.bin into boot.img
 	@echo -e "Generating boot.img..."; \
-	cp $(PWD)/boot.img $(OUT)/boot.img; \
-	$(DD) if=$(OUT)/boot.bin of=$(OUT)/boot.img bs=512 count=1 conv=notrunc || exit $?
+	cp $(PWD)/boot.img $(OUT)/$(BOOT_DIR)/boot.img; \
+	$(DD) if=$(OUT)/$(BOOT_DIR)/boot.bin of=$(OUT)/$(BOOT_DIR)/boot.img bs=512 count=1 conv=notrunc || exit $?
 
 	@# Copy loader.bin into the boot.image
-	@sudo mount $(OUT)/boot.img /media/ -t vfat -o loop || exit $?; \
-	sudo cp $(OUT)/loader.bin /media/ || exit $?; \
-	sudo cp $(OUT)/kernel.bin /media/ || exit $?; \
+	@sudo mount $(OUT)/$(BOOT_DIR)/boot.img /media/ -t vfat -o loop || exit $?; \
+	sudo cp $(OUT)/$(BOOT_DIR)/loader.bin /media/ || exit $?; \
+	sudo cp $(OUT)/$(KERN_DIR)/kernel.bin /media/ || exit $?; \
 	sync; sudo umount /media || exit $?
 
 .PHONY: boot.bin
 boot.bin:
 	@echo -e "crate boot.bin..."; \
-	$(NASM) $(BOOT_SRC) -o $(OUT)/$@ || exit $?
+	$(NASM) $(BOOT_SRC) -o $(OUT)/$(BOOT_DIR)/$@ || exit $?
 
 .PHONY: loader.bin
 loader.bin:
 	@echo -e "crate loader.bin..."; \
-	$(NASM) $(LOADER_SRC) -o $(OUT)/$@ || exit $?
+	$(NASM) $(LOADER_SRC) -o $(OUT)/$(BOOT_DIR)/$@ || exit $?
 
 .PHONY: tools
 tools:
