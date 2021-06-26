@@ -12,7 +12,7 @@
 			__res; \
 			})
 
-
+struct position pos;
 
 static int skip_atoi(const char **s)
 {
@@ -336,3 +336,55 @@ int vsprintf(char *buf, const char *fmt, va_list args)
 	return str -buf;
 }
 
+void init_printk(void)
+{
+#if 1
+	pos.x_resolution = 1440;
+	pos.y_resolution = 990;
+
+	pos.x_position = 0;
+	pos.y_position = 0;
+
+	pos.x_char_size = 8;
+	pos.y_char_size = 16;
+
+	pos.fb_addr = (int *)0xffff800000a00000;
+	pos.fb_len = (pos.x_resolution * pos.x_char_size * 4);
+#else
+#define X_DOT (1440*20)
+	int i;
+	int *frame_buf = (int *)0xffff800000a00000;
+	/* red line */
+	for (i = 0; i < X_DOT; i ++) {
+		*((char *)frame_buf + 0) = (char)0x00;
+		*((char *)frame_buf + 1) = (char)0x00;
+		*((char *)frame_buf + 2) = (char)0xff;
+		*((char *)frame_buf + 3) = (char)0x00;
+		frame_buf++;
+	}
+	/* green line */
+	for (i = 0; i < X_DOT; i ++) {
+		*((char *)frame_buf + 0) = (char)0x00;
+		*((char *)frame_buf + 1) = (char)0xff;
+		*((char *)frame_buf + 2) = (char)0x00;
+		*((char *)frame_buf + 3) = (char)0x00;
+		frame_buf++;
+	}
+	/* blue line */
+	for (i = 0; i < X_DOT; i ++) {
+		*((char *)frame_buf + 0) = (char)0xff;
+		*((char *)frame_buf + 1) = (char)0x00;
+		*((char *)frame_buf + 2) = (char)0x00;
+		*((char *)frame_buf + 3) = (char)0x00;
+		frame_buf++;
+	}
+	/* light line */
+	for (i = 0; i < X_DOT; i ++) {
+		*((char *)frame_buf + 0) = (char)0xff;
+		*((char *)frame_buf + 1) = (char)0xff;
+		*((char *)frame_buf + 2) = (char)0xff;
+		*((char *)frame_buf + 3) = (char)0x00;
+		frame_buf++;
+	}
+#endif
+}

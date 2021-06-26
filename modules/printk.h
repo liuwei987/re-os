@@ -16,7 +16,6 @@ struct position {
 	unsigned int *fb_addr;
 	unsigned long fb_len;
 };
-struct position pos;
 
 struct std_fmt {
 	int flags;
@@ -44,7 +43,7 @@ struct std_fmt {
 #define SPECIAL 32 /* 0x */
 #define SMALL   64 /* use 'abcdef' instead of 'ABCDEF' */
 
-
+void init_printk(void);
 int color_printk(unsigned int fr_color, unsigned int bk_color, const char *fmt, ...);
 void
 putchar(unsigned int *fb, int x_size, int x, int y, unsigned int fr_color, unsigned int bk_color, unsigned char font);
