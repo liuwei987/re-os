@@ -20,8 +20,6 @@ MAKE    := make
 
 export OUT CC DD AS LD CFLAGS LDFLAGS MAKE
 
-INCLUDE := -I./modules/ -I./arch/x86/kernel/
-
 # Compile the source file
 MODULES := modules
 BOOT_DIR := arch/x86/boot
@@ -34,6 +32,9 @@ MOD_LIB := $(OUT)/$(MODULES)/printk.a
 LIB_OBJS = $(patsubst %.c, $(OUT)/%.o, $(wildcard $(MODULES)/*.c))
 OBJS = $(patsubst %.S, $(OUT)/%.o, $(wildcard $(KERN_DIR)/*.S))
 OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/*.c))
+OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/cpu/*.c))
+
+INCLUDE := -I./$(MODULES)/ -I./$(KERN_DIR)/cpu/
 
 
 # Virtual machine for debuging OS
@@ -41,6 +42,10 @@ BOCHS := bochs
 
 .PHONY: all
 all: prepare kernel.bin boot
+	$(call start_bochs)
+
+.PHONY:
+start:
 	$(call start_bochs)
 
 # create directory for output
@@ -65,7 +70,7 @@ kernel.bin: $(OBJS) $(MOD_LIB)
 	@$(OBJCOPY) $(OBJCPYFLAGS) $(OUT)/$(KERN_DIR)/kernel.o $(OUT)/$(KERN_DIR)/$@
 
 $(OUT)/%.o: %.c
-	#[ -e $(dir $@) ] || mkdir -p $(dir $@);
+	[ -e $(dir $@) ] || mkdir -p $(dir $@);
 	$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 
 $(OUT)/%.o: %.S
