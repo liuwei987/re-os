@@ -25,7 +25,7 @@
 #define MCA_FEATURE	(1U<<14U)
 #define CMOV_FEATURE	(1U<<15U)
 #define PAT_FEATURE	(1U<<16U)
-#define PSE_FEATURE	(1U<<17U)
+#define PSE36_FEATURE	(1U<<17U)
 #define PSN_FEATURE	(1U<<18U)
 #define CLFSH_FEATURE	(1U<<19U)
 #define DS_FEATURE	(1U<<21U)
