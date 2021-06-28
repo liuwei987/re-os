@@ -41,7 +41,52 @@ entry64:
 	movq %rax, %gs
 	movq $0xffff800000007e00, %rsp
 
-	movq go_to_kernel(%rip), %rax
+# construct IDT descriptor and fill up the IDT
+Setup_IDT:
+	leaq ignore_intr(%rip), %rdx
+	movq $(0x08 << 16), %rax    # segment selector(index 1 of Kernel Code 64bit Segment 08 in GDT)
+	movw %dx, %ax
+	movq $(0x8e00 << 32), %rcx  # 0x8e00(interrupt gate in IDT), 0x8f00(trap gate in IDT)
+	addq %rcx, %rax
+	movl %edx, %ecx
+	shrl $16, %ecx
+	shlq $48, %rcx
+	addq %rcx, %rax
+	shrq $32, %rdx
+	leaq IDT_Table(%rip), %rdi
+	mov $256, %rcx
+rep_fill_IDT:
+	movq %rax, (%rdi)
+	movq %rdx, 8(%rdi)          # 16 bytes IDT descriptor
+	addq $0x10, %rdi
+	dec %rcx
+	jne rep_fill_IDT
+
+setup_TSS64:
+	leaq	TSS64_Table(%rip),	%rdx
+	xorq	%rax,	%rax
+	xorq	%rcx,	%rcx
+	movq	$0x89,	%rax
+	shlq	$40,	%rax
+	movl	%edx,	%ecx
+	shrl	$24,	%ecx
+	shlq	$56,	%rcx
+	addq	%rcx,	%rax
+	xorq	%rcx,	%rcx
+	movl	%edx,	%ecx
+	andl	$0xffffff,	%ecx
+	shlq	$16,	%rcx
+	addq	%rcx,	%rax
+	addq	$103,	%rax
+	leaq	GDT_Table(%rip),	%rdi
+	movq	%rax,	64(%rdi)
+	shrq	$32,	%rdx
+	movq	%rdx,	72(%rdi)
+
+	mov	$0x40,	%ax
+	ltr	%ax
+
+	movq go_to_kernel(%rip), %rax /* movq address */
 	pushq $0x08
 	pushq %rax
 	lretq
@@ -49,6 +94,71 @@ entry64:
 go_to_kernel:
 	.quad start_kernel
 
+ignore_intr:
+	cld
+	pushq %rax
+	pushq %rbx
+	pushq %rcx
+	pushq %rdx
+	pushq %rbp
+	pushq %rdi
+	pushq %rsi
+
+	pushq %r8
+	pushq %r9
+	pushq %r10
+	pushq %r11
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+
+	mov %es, %rax
+	pushq %rax
+	mov %ds, %rax
+	pushq %rax
+
+	mov $0x10, %rax
+	mov %rax, %es
+	mov %rax, %ds
+
+	leaq intr_msg(%rip), %rdx
+	#leaq intr_msg(%rip), %rax
+	#pushq %rax
+	#movq %rax, %rdx
+	movq $0x00000000, %rsi
+	movq $0xffffff00, %rdi
+	movq $0, %rax
+	call color_printk
+	#addq $0x8, %rsp
+
+Loop:
+	jmp Loop
+
+	popq %rax
+	movq %rax, %ds
+	popq %rax
+	movq %rax, %es
+
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %r11
+	popq %r10
+	popq %r9
+	popq %r8
+	popq %rsi
+	popq %rdi
+	popq %rbp
+	popq %rdx
+	popq %rcx
+	popq %rbx
+	popq %rax
+	iretq
+
+intr_msg:
+	.asciz "Unknow interrrupt or fault at RIP\n"
 // init page
 
 .align 8
