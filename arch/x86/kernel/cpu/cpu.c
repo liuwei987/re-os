@@ -37,14 +37,3 @@ int get_cpuid(int *eax, int *ebx, int *ecx, int *edx, int leaf, int subleaf)
 			:"a" (leaf), "c" (subleaf)\
 			:"memory");
 }
-
-static int feature_supported(void)
-{
-
-	int i, bits = 32;
-	int eax, ebx, ecx, edx;
-	int leaf = CPUID_EAX_FEATURE, subleaf = 0;
-
-	get_cpuid(&eax, &ebx, &ecx, &edx, leaf, subleaf);
-	if (edx & )
-}
