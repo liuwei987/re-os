@@ -14,5 +14,6 @@ void start_kernel(void)
 	subleaf = 0;
 	get_cpuid(&eax, &ebx, &ecx, &edx, leaf, subleaf);
 	color_printk(GREEN, BLACK, "CPU NAME: %s%s%s\n", &ebx, &ecx, &edx);
+	//int m = 1 / 0;  // traped in DIVIDE ERROR and show up the divide fault message
 	while (1);
 }
