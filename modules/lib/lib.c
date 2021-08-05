@@ -1,7 +1,4 @@
-#ifndef __LIB_H__
-#define __LIB_H__
-
-#define NULL 0
+#include "lib.h"
 
 int strlen(char *str)
 {
@@ -17,6 +14,3 @@ int strlen(char *str)
 
 	return __res;
 }
-
-
-#endif

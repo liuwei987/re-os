@@ -11,10 +11,11 @@ NASM := nasm
 OBJDUMP := objdump
 OBJCOPY := objcopy
 #TODO: fix the number function check stack failed
-CFLAGS  := -Werror -fno-stack-protector -mcmodel=large -fno-builtin -m64 -Wl,-Map=output.map
+CFLAGS  := -fno-stack-protector -mcmodel=large -fno-builtin -m64 -Wl,-Map=output.map
+#CFLAGS  := -Werror -fno-stack-protector -mcmodel=large -fno-builtin -m64 -Wl,-Map=output.map
 ASFLAGS := --64
 ARFLAGS := crs
-LDFLAGS := -b elf64-x86-64
+LDFLAGS := -b elf64-x86-64 -t #--trace-symbol=
 OBJCPYFLAGS := -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary
 MAKE    := make
 
@@ -27,18 +28,24 @@ KERN_DIR := arch/x86/kernel
 BOOT_SRC := $(BOOT_DIR)/boot.asm
 LOADER_SRC := $(BOOT_DIR)/loader.asm
 
-MOD_LIB := $(OUT)/$(MODULES)/printk.a
+MOD_LIB := $(OUT)/$(MODULES)/modules.a
 
-LIB_OBJS = $(patsubst %.c, $(OUT)/%.o, $(wildcard $(MODULES)/*.c))
-OBJS = $(patsubst %.S, $(OUT)/%.o, $(wildcard $(KERN_DIR)/*.S))
+LIB_OBJS := $(patsubst %.c, $(OUT)/%.o, $(wildcard $(MODULES)/lib/*.c))
+LIB_OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(MODULES)/printk/*.c))
+KERN_ASM := $(KERN_DIR)/head.S
+KERN_ASM += $(KERN_DIR)/entry.S
+OBJS := $(patsubst %.S, $(OUT)/%.o, $(KERN_ASM))
 OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/*.c))
 OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/cpu/*.c))
+OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/idt/*.c))
 
-INCLUDE := -I./$(MODULES)/ -I./$(KERN_DIR)/cpu/
+INCLUDE := -I./$(MODULES)/lib -I./$(MODULES)/printk
+INCLUDE += -I./$(KERN_DIR)/ -I./$(KERN_DIR)/cpu/ -I./$(KERN_DIR)/idt
 
 
 # Virtual machine for debuging OS
 BOCHS := bochs
+BOCHSRC_FILE := $(PWD)/bochsrc
 
 .PHONY: all
 all: prepare kernel.bin boot
@@ -61,7 +68,7 @@ define start_bochs
 	if [  "$$start_gui"x = "n"x ]; then \
 		echo "Existing with no bochs!" ; exit 0; \
 	fi ; \
-	$(BOCHS) -q
+	$(BOCHS) -qf $(BOCHSRC_FILE)
 endef
 
 .PHONY: kernel.bin
@@ -71,12 +78,13 @@ kernel.bin: $(OBJS) $(MOD_LIB)
 
 $(OUT)/%.o: %.c
 	[ -e $(dir $@) ] || mkdir -p $(dir $@);
-	$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 $(OUT)/%.o: %.S
 	#[ -e $(dir $@) ] || mkdir -p $(dir $@)
-	@$(CC) -E $< > $(dir $@)/head.s
-	@$(AS) $(ASFLAGS) -o $@ $(dir $@)/head.s
+	@$(CC) -E $< > $(OUT)/$(patsubst %.S,%.s,$<)
+	@$(AS) $(ASFLAGS) -o $@ $(OUT)/$(patsubst %.S,%.s,$<)
+
 
 $(MOD_LIB): $(LIB_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
