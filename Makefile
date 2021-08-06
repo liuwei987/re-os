@@ -38,9 +38,10 @@ OBJS := $(patsubst %.S, $(OUT)/%.o, $(KERN_ASM))
 OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/*.c))
 OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/cpu/*.c))
 OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/idt/*.c))
+OBJS += $(patsubst %.c, $(OUT)/%.o, $(wildcard $(KERN_DIR)/mem/*.c))
 
 INCLUDE := -I./$(MODULES)/lib -I./$(MODULES)/printk
-INCLUDE += -I./$(KERN_DIR)/ -I./$(KERN_DIR)/cpu/ -I./$(KERN_DIR)/idt
+INCLUDE += -I./$(KERN_DIR)/ -I./$(KERN_DIR)/cpu/ -I./$(KERN_DIR)/idt -I./$(KERN_DIR)/mem
 
 
 # Virtual machine for debuging OS
