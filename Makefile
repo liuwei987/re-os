@@ -11,11 +11,10 @@ NASM := nasm
 OBJDUMP := objdump
 OBJCOPY := objcopy
 #TODO: fix the number function check stack failed
-CFLAGS  := -fno-stack-protector -mcmodel=large -fno-builtin -m64 -Wl,-Map=output.map
-#CFLAGS  := -Werror -fno-stack-protector -mcmodel=large -fno-builtin -m64 -Wl,-Map=output.map
+CFLAGS  := -Werror -g -fno-stack-protector -mcmodel=large -fno-builtin -m64
 ASFLAGS := --64
 ARFLAGS := crs
-LDFLAGS := -b elf64-x86-64 -t #--trace-symbol=
+LDFLAGS := -b elf64-x86-64 -t -Map=out/output.map #--trace-symbol=
 OBJCPYFLAGS := -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary
 MAKE    := make
 
