@@ -6,13 +6,15 @@ extern char _etext;
 extern char _edata;
 extern char _end;
 
+unsigned long *global_cr3 = NULL;
 struct global_mem_descriptor global_mem_struct = {{0}, 0};
+unsigned int ZONE_NORMAL_INDEX = 0, ZONE_DMA_INDEX = 0, ZONE_UNMAPED_INDEX = 0;
 
 static unsigned long page_init(struct Page *page, unsigned long flags)
 {
 
 	if (!page->attribute) {
-		*(global_mem_struct.bits_map + ((page->phy_addr) >> PAGE_2M_SHIFT) >> 6) |= 1UL << (page->phy_addr >> PAGE_2M_SHIFT) % 64;
+		*(global_mem_struct.bits_map + ((page->phy_addr >> PAGE_2M_SHIFT) >> 6)) |= 1UL << (page->phy_addr >> PAGE_2M_SHIFT) % 64;
 		page->attribute = flags;
 		page->ref_count ++;
 		page->zone->page_using_count++;
@@ -34,7 +36,7 @@ static unsigned long page_init(struct Page *page, unsigned long flags)
 void init_memory()
 {
 
-	unsigned long total_mem = 0, *global_cr3;
+	unsigned long total_mem = 0;
 	struct E820 *p;
 
 	unsigned int i, e820_entrys;
@@ -43,16 +45,14 @@ void init_memory()
 	p = (struct E820 *)0xffff800000007e00;
 
 	/* walk over the e820 table */
-	//color_printk(ORANGE, BLACK, "Display Physic Address MAP,Type(1:RAM,2:ROM or Reserved,3:ACPI Reclaim Memory,4:ACPI NVS Memory,Others:Undefine)\n");
 	for (i = 0; i < e820_entrys; i ++) {
-		//color_printk(ORANGE, BLACK, "Address:%#010x,%08x\tLength:%#010x,%08x\tType:%#010x\n", p->addr2, p->addr1, p->length2, p->length1, p->type);
 		color_printk(ORANGE, BLACK, "Address:%#010x\tLength:%#010x\tType:%#010x\n", p->address, p->length, p->type);
 
-#if 0		// method of caculate type 1(RAM) total memory
+		// method of caculate type 1(RAM) total memory
 		if (p->type == 1) {
 			total_mem += p->length;
 		}
-#endif
+
 		global_mem_struct.e820[i].address = p->address;
 		global_mem_struct.e820[i].length  = p->length;
 		global_mem_struct.e820[i].type    = p->type;
@@ -64,9 +64,9 @@ void init_memory()
 
 		p++;
 	}
+	color_printk(ORANGE, BLACK, "OS can use total RAM:%#018lx\n", total_mem);
 
 	total_mem = global_mem_struct.e820[global_mem_struct.e820_length].address + global_mem_struct.e820[global_mem_struct.e820_length].length;
-	//color_printk(ORANGE, BLACK, "OS can use total RAM:%#018lx\n", total_mem);
 	color_printk(ORANGE, BLACK, "OS can use total Memory:%#018lx\n", total_mem);
 
 	/* text, data, available memory adress for global memory struct */
@@ -79,16 +79,19 @@ void init_memory()
 	global_mem_struct.bits_map   = (unsigned long *)PAGE_4K_ALIGN(global_mem_struct.end_brk);
 	global_mem_struct.bits_size  = total_mem >> PAGE_2M_SHIFT;
 	global_mem_struct.bits_length = (((unsigned long)(total_mem >> PAGE_2M_SHIFT) + sizeof(long) * 8 - 1) / 8) & (~(sizeof(long) - 1));
+	memset(global_mem_struct.bits_map, 0xff, global_mem_struct.bits_length);
 
 	/* page_struct init for global memory struct */
 	global_mem_struct.page_struct  = (struct Page *)(PAGE_4K_ALIGN((unsigned long)global_mem_struct.bits_map + global_mem_struct.bits_length));
 	global_mem_struct.pages_size   = total_mem >> PAGE_2M_SHIFT;
 	global_mem_struct.pages_length = ((total_mem >> PAGE_2M_SHIFT) * sizeof(struct Page) + sizeof(long) - 1) & (~(sizeof(long) - 1));
+	memset(global_mem_struct.page_struct, 0x00, global_mem_struct.pages_length);
 
 	/* zone_struct init for global memory struct */
 	global_mem_struct.zone_struct = (struct Zone *)(PAGE_4K_ALIGN((unsigned long)global_mem_struct.page_struct + global_mem_struct.pages_length));
 	global_mem_struct.zone_size = 0;
 	global_mem_struct.zone_length = (5 * sizeof(struct Zone) + sizeof(long) - 1) & (~(sizeof(long) - 1));
+	memset(global_mem_struct.zone_struct, 0x00, global_mem_struct.zone_length);
 
 	total_mem = 0;
 	for (i = 0; i < global_mem_struct.e820_length; i ++) {
@@ -155,7 +158,7 @@ void init_memory()
 		struct Zone *z = global_mem_struct.zone_struct + i;
 		color_printk(ORANGE, BLACK, "zone_start_addr:%#018lx, zone_end_addr:%#018lx, zone_length:%#018lx, pages_group:%#018lx\n", z->zone_start_addr, z->zone_end_addr, z->zone_length, z->pages_group);
 
-		if (z->zone_start_address == 0x100000000)
+		if (z->zone_start_addr == 0x100000000)
 			ZONE_UNMAPED_INDEX = 1;
 	}
 
@@ -173,11 +176,11 @@ void init_memory()
 
 	global_cr3 = get_gdt();
 	color_printk(ORANGE, BLACK, "global_cr3\t:%#018lx\n", global_cr3);
-	color_printk(ORANGE, BLACK, "*global_cr3\t:%#018lx\n", *phy_to_virt(global_cr3) & (~0xff));
-	color_printk(ORANGE, BLACK, "**global_cr3\t:%#018lx\n", **phy_to_virt(global_cr3) & (~(0xff)));
+	color_printk(ORANGE, BLACK, "*global_cr3\t:%#018lx\n", *(unsigned long *)(phy_to_virt(global_cr3) & (~0xff)));
+	color_printk(ORANGE, BLACK, "**global_cr3\t:%#018lx\n", *(unsigned long *)(*(unsigned long *)(phy_to_virt(global_cr3) & (~0xff) & (~0xff))));
 
 	for (i = 0; i < 10; i++) {
-		*(phy_to_virt(global_cr3) + i) = 0UL;
+		*(unsigned long *)(phy_to_virt(global_cr3) + i) = 0UL;
 	}
 
 	flush_tlb();
