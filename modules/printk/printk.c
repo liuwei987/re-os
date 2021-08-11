@@ -1,6 +1,7 @@
 #include "printk.h"
 #include "lib.h"
 #include "font.h"
+#include "mem.h"
 
 #define PRINT_BUF 4096
 #define is_digit(c) ((c) >= '0' && (c) <= '9')
@@ -349,7 +350,7 @@ void init_printk(void)
 	pos.y_char_size = 16;
 
 	pos.fb_addr = (int *)0xffff800000a00000;
-	pos.fb_len = (pos.x_resolution * pos.x_char_size * 4);
+	pos.fb_len = PAGE_4K_ALIGN(pos.x_resolution * pos.x_char_size * 4);
 #else
 #define X_DOT (1440*20)
 	int i;
