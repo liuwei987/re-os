@@ -18,7 +18,10 @@ static inline int strlen(char *str)
 	return __res;
 }
 
-
+#if 1
+void * memset(void *address, unsigned char c, long cnt);
+#endif
+#if 0
 static inline void * memset(void * Address,unsigned char C,long Count)
 {
         int d0,d1;
@@ -42,5 +45,5 @@ static inline void * memset(void * Address,unsigned char C,long Count)
                                 );
         return Address;
 }
-
+#endif
 #endif
