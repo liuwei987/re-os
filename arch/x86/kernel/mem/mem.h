@@ -121,4 +121,8 @@ void init_memory();
 extern unsigned long *global_cr3;
 extern struct global_mem_descriptor global_mem_struct;
 extern unsigned int ZONE_NORMAL_INDEX, ZONE_DMA_INDEX, ZONE_UNMAPED_INDEX;
+extern unsigned char _text;
+extern unsigned char _etext;
+extern unsigned char _edata;
+extern unsigned char _end;
 #endif
