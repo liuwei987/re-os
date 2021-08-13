@@ -84,11 +84,9 @@ void init_memory()
 	global_mem_struct.end_brk    = (unsigned long)&_end;
 
 	/* init bit map for global memory struct */
-	//global_mem_struct.bits_map   = (unsigned long *)PAGE_4K_ALIGN(global_mem_struct.end_brk);
-	global_mem_struct.bits_map = (unsigned long *)((global_mem_struct.end_brk + PAGE_4K - 1) & PAGE_4K_MASK);
+	global_mem_struct.bits_map   = (unsigned long *)PAGE_4K_ALIGN(global_mem_struct.end_brk);
 	global_mem_struct.bits_size  = total_mem >> PAGE_2M_SHIFT;
 	global_mem_struct.bits_length = (((unsigned long)(total_mem >> PAGE_2M_SHIFT) + sizeof(long) * 8 - 1) / 8) & (~(sizeof(long) - 1));
-	color_printk(ORANGE, BLACK, "total:%#018lx, size:%#018lx,length:%#018lx, global_struct.bits_map=%#018lx\n", total_mem, global_mem_struct.bits_size, global_mem_struct.bits_length, global_mem_struct.bits_map);
 	memset(global_mem_struct.bits_map, 0xff, global_mem_struct.bits_length);
 
 	/* page_struct init for global memory struct */
