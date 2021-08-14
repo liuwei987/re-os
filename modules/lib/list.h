@@ -1,7 +1,7 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
-//#include "lib.h"
+#include "lib.h"
 
 struct list_head
 {
@@ -66,6 +66,19 @@ static inline int is_list_last(struct list_head *list, struct list_head *head)
 #define list_for_each_safe(pos, n, head)			\
 	for (pos = (head)->next, n = pos->next; pos != (head);	\
 				pos = n, n = pos->next)
-		
 
+#define list_entry(ptr, type, mem)		\
+	container_of(ptr, type, mem)
+
+#define list_first_entry(ptr, type, mem)	\
+	container_of((ptr)->next, type, mem)
+
+#define list_last_entry(ptr, type, mem)		\
+	container_of((ptr)->prev, type, mem)
+
+#define list_next_entry(pos, mem)		\
+	container_of((pos)->mem.next, (typeof(*(pos))), mem)
+
+#define list_prev_entry(pos, mem)		\
+	container_of((pos)->mem.prev, (typeof(*(pos))), mem)
 #endif
