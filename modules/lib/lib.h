@@ -2,6 +2,18 @@
 #define __LIB_H__
 
 #define NULL 0
+#define size_t unsigned int
+#define offset_of(type, mem)			\
+	({					\
+	((size_t)&(((type *)0)->mem));	\
+	})
+
+
+#define container_of(ptr, type, mem)			\
+	({						\
+	void *_p = (void *)(ptr);			\
+	(type *)((char *)_p - offset_of(type, mem));	\
+	})
 
 static inline int strlen(char *str)
 {
