@@ -11,7 +11,8 @@ NASM := nasm
 OBJDUMP := objdump
 OBJCOPY := objcopy
 #TODO: fix the number function check stack failed
-CFLAGS  := -Werror -g -fno-stack-protector -mcmodel=large -fno-builtin -m64
+CFLAGS  := -g -fno-stack-protector -mcmodel=large -fno-builtin -m64
+#CFLAGS  := -Werror -g -fno-stack-protector -mcmodel=large -fno-builtin -m64
 ASFLAGS := --64
 ARFLAGS := crs
 LDFLAGS := -b elf64-x86-64 -t -Map=out/output.map #--trace-symbol=
